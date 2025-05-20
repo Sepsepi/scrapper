@@ -1,3 +1,10 @@
-2025/05/20-03:11:58.634 82ec Reusing MANIFEST C:\Users\my notebook\Desktop\scrapper\glassdoor_profile\Default\IndexedDB\https_www.glassdoor.ca_0.indexeddb.leveldb/MANIFEST-000001
-2025/05/20-03:11:58.641 82ec Recovering log #7
-2025/05/20-03:11:58.873 82ec Reusing old log C:\Users\my notebook\Desktop\scrapper\glassdoor_profile\Default\IndexedDB\https_www.glassdoor.ca_0.indexeddb.leveldb/000007.log 
+2025/05/20-03:35:37.607 2770 Reusing MANIFEST C:\Users\my notebook\Desktop\scrapper\glassdoor_profile\Default\IndexedDB\https_www.glassdoor.ca_0.indexeddb.leveldb/MANIFEST-000001
+2025/05/20-03:35:37.608 2770 Recovering log #7
+2025/05/20-03:35:37.788 2770 Reusing old log C:\Users\my notebook\Desktop\scrapper\glassdoor_profile\Default\IndexedDB\https_www.glassdoor.ca_0.indexeddb.leveldb/000007.log 
+2025/05/20-03:35:37.850 7f80 Level-0 table #12: started
+2025/05/20-03:35:37.898 7f80 Level-0 table #12: 731305 bytes OK
+2025/05/20-03:35:37.901 7f80 Delete type=0 #7
+2025/05/20-03:35:37.936 2770 Compacting 1@1 + 1@2 files
+2025/05/20-03:35:37.955 2770 Generated table #13@1: 565 keys, 58474 bytes
+2025/05/20-03:35:37.955 2770 Compacted 1@1 + 1@2 files => 58474 bytes
+2025/05/20-03:35:37.957 2770 compacted to: files[ 0 0 1 0 0 0 0 ]

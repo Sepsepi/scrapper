@@ -237,11 +237,34 @@ class GlassdoorScraperApp:
                                 title = title_el.inner_text().strip()
                         except Exception:
                             pass
+                        # Try multiple selectors for company name
                         try:
                             company_el = page.query_selector('div[data-test="employerName"]')
+                            if not company_el:
+                                company_el = page.query_selector('span[data-test="employerName"]')
+                            if not company_el:
+                                company_el = page.query_selector('a[data-test="employerName"]')
+                            if not company_el:
+                                # Try the profile container link with id pattern
+                                company_el = page.query_selector('a[id^="3"][class*="EmployerProfile_profileContainer"]')
+                            if not company_el:
+                                # Fallback to any profile container
+                                company_el = page.query_selector('a[class*="EmployerProfile_profileContainer"]')
                             if company_el:
-                                company = company_el.inner_text().strip()
-                        except Exception:
+                                company_text = company_el.inner_text().strip()
+                                # Clean up the company name
+                                import re
+                                # First remove rating if present (e.g., "4.5★")
+                                company_text = re.sub(r'\s*\d+(\.\d+)?★.*$', '', company_text)
+                                # Then remove "Logo" and anything before it
+                                if 'Logo' in company_text:
+                                    parts = company_text.split('Logo')
+                                    # Take the part after "Logo"
+                                    company_text = parts[-1].strip()
+                                # Remove any duplicate spaces and clean up
+                                company = re.sub(r'\s+', ' ', company_text).strip()
+                        except Exception as e:
+                            print(f"[DEBUG] Error extracting company name: {e}")
                             pass
                         # Fallback to card if detail view fails
                         if not title:
@@ -253,7 +276,10 @@ class GlassdoorScraperApp:
                         if not company:
                             try:
                                 company_el = card.query_selector('div[data-test="jobListing-company-name"]')
-                                company = company_el.inner_text().strip() if company_el else ""
+                                if not company_el:
+                                    company_el = card.query_selector('span[data-test="jobListing-company-name"]')
+                                if company_el:
+                                    company = company_el.inner_text().strip()
                             except Exception:
                                 company = ""
                         # Get direct link
@@ -296,9 +322,21 @@ class GlassdoorScraperApp:
         ws.append(headers)
         for header in headers:
             ws.column_dimensions[get_column_letter(headers.index(header) + 1)].width = 25  # Set column width
-        # Write data
-        for row in data:
-            ws.append(list(row.values()))
+            
+        # Get the column index for Direct Link
+        link_col_idx = headers.index('Direct Link') + 1
+        
+        # Write data and create hyperlinks
+        for row_idx, row_data in enumerate(data, start=2):  # start=2 because header is row 1
+            for col_idx, value in enumerate(row_data.values(), start=1):
+                cell = ws.cell(row=row_idx, column=col_idx)
+                if col_idx == link_col_idx and value:  # If this is the Direct Link column
+                    cell.hyperlink = value  # Set the hyperlink
+                    cell.value = "Click here"  # Change display text
+                    cell.font = Font(color="0000FF", underline="single")  # Make it look like a link
+                else:
+                    cell.value = value
+                    
         # Auto-adjust column widths
         for column in ws.columns:
             max_length = 0
@@ -311,6 +349,7 @@ class GlassdoorScraperApp:
                     pass
             adjusted_width = (max_length + 2)
             ws.column_dimensions[get_column_letter(column[0].column)].width = adjusted_width
+            
         # Save workbook
         wb.save(file_path)
         wb.close()
