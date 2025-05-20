@@ -252,11 +252,16 @@ class GlassdoorScraperApp:
         ws.title = "Jobs"
         headers = ["Company Name", "Job Title", "Direct Link"]
         ws.append(headers)
-        # Style header row
+        # Style header row with larger font and increased row height
         for cell in ws[1]:
-            cell.font = Font(bold=True, color="FFFFFF")
+            cell.font = Font(bold=True, color="FFFFFF", size=15)
             cell.fill = openpyxl.styles.PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
             cell.alignment = openpyxl.styles.Alignment(horizontal="center", vertical="center")
+        ws.row_dimensions[1].height = 30  # Make header row taller
+        # Set wider columns for better visibility
+        ws.column_dimensions['A'].width = 28
+        ws.column_dimensions['B'].width = 28
+        ws.column_dimensions['C'].width = 38
         # Add data rows with alternating fill
         fill1 = openpyxl.styles.PatternFill(start_color="DCE6F1", end_color="DCE6F1", fill_type="solid")
         fill2 = openpyxl.styles.PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")

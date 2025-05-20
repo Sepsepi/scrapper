@@ -1,6 +1,12 @@
-2025/05/20-02:36:16.402 c94 Reusing MANIFEST C:\Users\my notebook\Desktop\scrapper\glassdoor_profile\Default\Local Storage\leveldb/MANIFEST-000001
-2025/05/20-02:36:16.405 c94 Recovering log #21
-2025/05/20-02:36:16.407 c94 Reusing old log C:\Users\my notebook\Desktop\scrapper\glassdoor_profile\Default\Local Storage\leveldb/000021.log 
-2025/05/20-02:36:42.491 92dc Level-0 table #24: started
-2025/05/20-02:36:42.512 92dc Level-0 table #24: 11586 bytes OK
-2025/05/20-02:36:42.518 92dc Delete type=0 #21
+2025/05/20-02:39:36.365 9a8c Reusing MANIFEST C:\Users\my notebook\Desktop\scrapper\glassdoor_profile\Default\Local Storage\leveldb/MANIFEST-000001
+2025/05/20-02:39:36.367 9a8c Recovering log #23
+2025/05/20-02:39:36.370 9a8c Reusing old log C:\Users\my notebook\Desktop\scrapper\glassdoor_profile\Default\Local Storage\leveldb/000023.log 
+2025/05/20-02:39:36.371 64d0 Compacting 4@0 + 1@1 files
+2025/05/20-02:39:36.379 64d0 Generated table #26@0: 17 keys, 6980 bytes
+2025/05/20-02:39:36.379 64d0 Compacted 4@0 + 1@1 files => 6980 bytes
+2025/05/20-02:39:36.380 64d0 compacted to: files[ 0 1 0 0 0 0 0 ]
+2025/05/20-02:39:36.381 64d0 Delete type=2 #12
+2025/05/20-02:39:36.381 64d0 Delete type=2 #14
+2025/05/20-02:39:36.381 64d0 Delete type=2 #17
+2025/05/20-02:39:36.381 64d0 Delete type=2 #20
+2025/05/20-02:39:36.381 64d0 Delete type=2 #24
