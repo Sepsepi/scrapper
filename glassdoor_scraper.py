@@ -6,7 +6,8 @@ from openpyxl import Workbook
 from playwright.sync_api import sync_playwright
 import random
 import time
-from openpyxl.styles import Font
+import openpyxl
+from openpyxl.styles import Font, Alignment, PatternFill
 from openpyxl.utils import get_column_letter
 
 class GlassdoorScraperApp:
@@ -151,7 +152,7 @@ class GlassdoorScraperApp:
                             break
                     except Exception:
                         continue
-                # After job, click location to focus it
+                # Fill location input
                 for sel in location_selectors:
                     try:
                         page.wait_for_selector(sel, timeout=3000)
@@ -161,44 +162,13 @@ class GlassdoorScraperApp:
                             location_input.fill("")
                             self.wait_like_human(0.3, 0.7)
                             location_input.type(location)
-                            self.wait_like_human(0.5, 1)
-                            # Try to select the first suggestion from the dropdown
-                            location_input.press("ArrowDown")
-                            self.wait_like_human(0.2, 0.4)
+                            self.wait_like_human(0.3, 0.7)
                             location_input.press("Enter")
-                            self.wait_like_human(0.5, 1)
+                            page.wait_for_load_state('networkidle', timeout=20000)
+                            self.wait_like_human(2, 3)
                             break
-                    except Exception:
-                        continue
-                # After location, click job again to ensure both are registered
-                if job_input:
-                    job_input.click()
-                    self.wait_like_human(0.2, 0.5)
-                self.wait_like_human(0.5, 1)
-                # Click the search button (try multiple selectors)
-                search_btn = None
-                for sel in ['button[aria-label="Search"]', 'button[data-test="search-button"]', 'button[type="submit"]']:
-                    try:
-                        btn = page.query_selector(sel)
-                        if btn and btn.is_enabled():
-                            search_btn = btn
-                            break
-                    except Exception:
-                        continue
-                if search_btn:
-                    self.wait_like_human(0.5, 1)
-                    search_btn.click()
-                    # Wait for the page to reload after search
-                    page.wait_for_load_state('networkidle', timeout=20000)
-                    self.wait_like_human(2, 3)
-                else:
-                    # Fallback: press Enter in location input
-                    if location_input:
-                        location_input.press("Enter")
-                        page.wait_for_load_state('networkidle', timeout=20000)
-                        self.wait_like_human(2, 3)
-            except Exception as e:
-                print(f"[DEBUG] Could not fill job/location fields: {e}")
+                    except Exception as e:
+                        print(f"[DEBUG] Could not fill job/location fields: {e}")
             count = 0
             while count < num_jobs:
                 # Scroll slowly through the page like a human
@@ -241,19 +211,34 @@ class GlassdoorScraperApp:
         wb = Workbook()
         ws = wb.active
         ws.title = "Jobs"
-        ws.append(["Company Name", "Job Title", "Direct Link"])
-        for row in data:
+        headers = ["Company Name", "Job Title", "Direct Link"]
+        ws.append(headers)
+        # Style header row
+        for cell in ws[1]:
+            cell.font = Font(bold=True, color="FFFFFF")
+            cell.fill = openpyxl.styles.PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
+            cell.alignment = openpyxl.styles.Alignment(horizontal="center", vertical="center")
+        # Add data rows with alternating fill
+        fill1 = openpyxl.styles.PatternFill(start_color="DCE6F1", end_color="DCE6F1", fill_type="solid")
+        fill2 = openpyxl.styles.PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
+        for idx, row in enumerate(data, start=2):
             ws.append([row['Company Name'], row['Job Title'], row['Direct Link']])
-        # Make the 'Direct Link' column clickable and display the link as text
+            for col, cell in enumerate(ws[idx], start=1):
+                cell.alignment = openpyxl.styles.Alignment(horizontal="center", vertical="center")
+                if idx % 2 == 0:
+                    cell.fill = fill1
+                else:
+                    cell.fill = fill2
+        # Make the 'Direct Link' column display 'Direct Link' as text and be clickable
         for cell in ws["C"]:
             if cell.row == 1:
                 continue
             link = cell.value
             if link:
                 cell.hyperlink = link
-                cell.value = link
+                cell.value = "Direct Link"
                 cell.font = Font(color="0563C1", underline="single")
-        # Optionally, auto-size columns
+        # Auto-size columns
         for col in ws.columns:
             max_length = 0
             column = get_column_letter(col[0].column)
@@ -264,6 +249,8 @@ class GlassdoorScraperApp:
                 except:
                     pass
             ws.column_dimensions[column].width = max_length + 2
+        # Add autofilter
+        ws.auto_filter.ref = ws.dimensions
         wb.save(path)
 
 def main():

@@ -1,3 +1,5 @@
-2025/05/20-00:38:55.703 8cfc Reusing MANIFEST C:\Users\my notebook\Desktop\scrapper\glassdoor_profile\Default\Local Storage\leveldb/MANIFEST-000001
-2025/05/20-00:38:55.705 8cfc Recovering log #7
-2025/05/20-00:38:55.707 8cfc Reusing old log C:\Users\my notebook\Desktop\scrapper\glassdoor_profile\Default\Local Storage\leveldb/000007.log 
+2025/05/20-02:04:22.849 7234 Reusing MANIFEST C:\Users\my notebook\Desktop\scrapper\glassdoor_profile\Default\Local Storage\leveldb/MANIFEST-000001
+2025/05/20-02:04:22.852 7234 Recovering log #11
+2025/05/20-02:04:22.852 7234 Level-0 table #14: started
+2025/05/20-02:04:22.863 7234 Level-0 table #14: 16796 bytes OK
+2025/05/20-02:04:22.867 7234 Delete type=0 #11
