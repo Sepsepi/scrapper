@@ -116,59 +116,98 @@ class GlassdoorScraperApp:
             # Now proceed to search
             page.goto("https://www.glassdoor.com/Job/jobs.htm")
             self.wait_like_human(2, 3)
+            # Try multiple selectors for robustness
+            job_selectors = [
+                'input[placeholder="Find your perfect job"]',
+                'input[data-test="search-job-keyword-input-internal"]',
+                'input#searchJobKeyword',
+                'input[placeholder*="Job title"]',
+                'input[aria-label*="Search Keyword"]',
+                'input[name="keyword"]',
+            ]
+            location_selectors = [
+                'input[placeholder*="City, state, zipcode"]',
+                'input[id^="searchBar-location"]',
+                'input[data-test="search-job-location-input-internal"]',
+                'input#searchJobLocation',
+                'input[placeholder*="Location"]',
+                'input[aria-label*="Search Location"]',
+                'input[name="location"]',
+            ]
+            job_input = None
+            location_input = None
+            # Fill job input
+            for sel in job_selectors:
+                try:
+                    page.wait_for_selector(sel, timeout=3000)
+                    job_input = page.query_selector(sel)
+                    if job_input:
+                        job_input.click()
+                        job_input.fill("")
+                        self.wait_like_human(0.3, 0.7)
+                        job_input.type(job)
+                        self.wait_like_human(0.3, 0.7)
+                        job_input.press("Enter")
+                        self.wait_like_human(0.5, 1)
+                        break
+                except Exception:
+                    continue
+            # Fill location input
+            for sel in location_selectors:
+                try:
+                    page.wait_for_selector(sel, timeout=3000)
+                    location_input = page.query_selector(sel)
+                    if location_input:
+                        location_input.click()
+                        location_input.fill("")
+                        self.wait_like_human(0.3, 0.7)
+                        location_input.type(location)
+                        self.wait_like_human(0.3, 0.7)
+                        location_input.press("Enter")
+                        page.wait_for_load_state('networkidle', timeout=20000)
+                        self.wait_like_human(2, 3)
+                        break
+                except Exception as e:
+                    print(f"[DEBUG] Could not fill job/location fields: {e}")
+            # After job, click location to focus it (use robust selector) and select correct dropdown option
             try:
-                # Try multiple selectors for robustness
-                job_selectors = [
-                    'input[placeholder="Find your perfect job"]',
-                    'input[data-test="search-job-keyword-input-internal"]',
-                    'input#searchJobKeyword',
-                    'input[placeholder*="Job title"]',
-                    'input[aria-label*="Search Keyword"]',
-                    'input[name="keyword"]',
-                ]
-                location_selectors = [
-                    'input[placeholder="City, state, zipcode or \"remote\""]',
-                    'input[data-test="search-job-location-input-internal"]',
-                    'input#searchJobLocation',
-                    'input[placeholder*="Location"]',
-                    'input[aria-label*="Search Location"]',
-                    'input[name="location"]',
-                ]
-                job_input = None
-                location_input = None
-                # Fill job input
-                for sel in job_selectors:
-                    try:
-                        page.wait_for_selector(sel, timeout=3000)
-                        job_input = page.query_selector(sel)
-                        if job_input:
-                            job_input.click()
-                            job_input.fill("")
-                            self.wait_like_human(0.3, 0.7)
-                            job_input.type(job)
-                            self.wait_like_human(0.3, 0.7)
-                            job_input.press("Enter")
-                            self.wait_like_human(0.5, 1)
-                            break
-                    except Exception:
-                        continue
-                # Fill location input
-                for sel in location_selectors:
-                    try:
-                        page.wait_for_selector(sel, timeout=3000)
-                        location_input = page.query_selector(sel)
-                        if location_input:
-                            location_input.click()
-                            location_input.fill("")
-                            self.wait_like_human(0.3, 0.7)
-                            location_input.type(location)
-                            self.wait_like_human(0.3, 0.7)
-                            location_input.press("Enter")
-                            page.wait_for_load_state('networkidle', timeout=20000)
-                            self.wait_like_human(2, 3)
-                            break
-                    except Exception as e:
-                        print(f"[DEBUG] Could not fill job/location fields: {e}")
+                page.wait_for_selector('input[id^="searchBar-location"]', timeout=3000)
+                location_input = page.query_selector('input[id^="searchBar-location"]')
+                if location_input:
+                    location_input.click()
+                    location_input.fill("")
+                    self.wait_like_human(0.3, 0.7)
+                    # Type location char by char
+                    for char in location:
+                        location_input.type(char)
+                        self.wait_like_human(0.05, 0.15)
+                    self.wait_like_human(1, 1.5)  # Wait for dropdown
+                    # Find dropdown options and select the correct one
+                    dropdown_options = page.query_selector_all('li[role="option"], div[role="option"]')
+                    found = False
+                    for option in dropdown_options:
+                        try:
+                            option_text = option.inner_text().strip().lower()
+                            if location.lower() in option_text:
+                                option.click()
+                                found = True
+                                self.wait_like_human(0.3, 0.7)
+                                break
+                        except Exception:
+                            continue
+                    if not found:
+                        # fallback: ArrowDown+Enter
+                        location_input.press("ArrowDown")
+                        self.wait_like_human(0.2, 0.4)
+                        location_input.press("Enter")
+                        self.wait_like_human(0.3, 0.7)
+                    # After selecting location, press Enter to trigger reload
+                    location_input.press("Enter")
+                    self.wait_like_human(2, 3)  # Wait for page reload
+                    page.wait_for_load_state('networkidle', timeout=20000)
+                    self.wait_like_human(1, 2)
+            except Exception:
+                print(f"[DEBUG] Could not fill location field with robust selector")
             count = 0
             while count < num_jobs:
                 # Scroll slowly through the page like a human
