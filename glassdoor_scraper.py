@@ -220,13 +220,52 @@ class GlassdoorScraperApp:
                         break
                     try:
                         self.wait_like_human(1, 2.5)
-                        title_el = card.query_selector('a[data-test="job-link"]')
-                        title = title_el.inner_text().strip() if title_el else ""
-                        link = title_el.get_attribute('href') if title_el else ""
-                        if link and not link.startswith('http'):
-                            link = "https://www.glassdoor.com" + link
-                        company_el = card.query_selector('div[data-test="jobListing-company-name"]')
-                        company = company_el.inner_text().strip() if company_el else ""
+                        # Click the job card to open the detailed view
+                        card.click()
+                        self.wait_like_human(1.5, 2.5)
+                        # Wait for job title in detail view
+                        try:
+                            page.wait_for_selector('h1[id^="jd-job-title-"]', timeout=5000)
+                        except Exception:
+                            pass
+                        # Extract job title and company name from detail view
+                        title = ""
+                        company = ""
+                        try:
+                            title_el = page.query_selector('h1[id^="jd-job-title-"]')
+                            if title_el:
+                                title = title_el.inner_text().strip()
+                        except Exception:
+                            pass
+                        try:
+                            company_el = page.query_selector('div[data-test="employerName"]')
+                            if company_el:
+                                company = company_el.inner_text().strip()
+                        except Exception:
+                            pass
+                        # Fallback to card if detail view fails
+                        if not title:
+                            try:
+                                title_el = card.query_selector('a[data-test="job-link"]')
+                                title = title_el.inner_text().strip() if title_el else ""
+                            except Exception:
+                                title = ""
+                        if not company:
+                            try:
+                                company_el = card.query_selector('div[data-test="jobListing-company-name"]')
+                                company = company_el.inner_text().strip() if company_el else ""
+                            except Exception:
+                                company = ""
+                        # Get direct link
+                        link = ""
+                        try:
+                            link_el = card.query_selector('a[data-test="job-link"]')
+                            if link_el:
+                                link = link_el.get_attribute('href')
+                                if link and not link.startswith('http'):
+                                    link = "https://www.glassdoor.com" + link
+                        except Exception:
+                            link = ""
                         data.append({
                             'Company Name': company,
                             'Job Title': title,
@@ -246,61 +285,41 @@ class GlassdoorScraperApp:
             browser.close()
         return data
 
-    def save_to_excel(self, data, path):
+    def save_to_excel(self, data, file_path):
+        if not data:
+            return
         wb = Workbook()
         ws = wb.active
-        ws.title = "Jobs"
-        headers = ["Company Name", "Job Title", "Direct Link"]
+        ws.title = "Job Listings"
+        # Write header
+        headers = list(data[0].keys())
         ws.append(headers)
-        # Style header row with larger font and increased row height
-        for cell in ws[1]:
-            cell.font = Font(bold=True, color="FFFFFF", size=15)
-            cell.fill = openpyxl.styles.PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
-            cell.alignment = openpyxl.styles.Alignment(horizontal="center", vertical="center")
-        ws.row_dimensions[1].height = 30  # Make header row taller
-        # Set wider columns for better visibility
-        ws.column_dimensions['A'].width = 28
-        ws.column_dimensions['B'].width = 28
-        ws.column_dimensions['C'].width = 38
-        # Add data rows with alternating fill
-        fill1 = openpyxl.styles.PatternFill(start_color="DCE6F1", end_color="DCE6F1", fill_type="solid")
-        fill2 = openpyxl.styles.PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
-        for idx, row in enumerate(data, start=2):
-            ws.append([row['Company Name'], row['Job Title'], row['Direct Link']])
-            for col, cell in enumerate(ws[idx], start=1):
-                cell.alignment = openpyxl.styles.Alignment(horizontal="center", vertical="center")
-                if idx % 2 == 0:
-                    cell.fill = fill1
-                else:
-                    cell.fill = fill2
-        # Make the 'Direct Link' column display 'Direct Link' as text and be clickable
-        for cell in ws["C"]:
-            if cell.row == 1:
-                continue
-            link = cell.value
-            if link:
-                cell.hyperlink = link
-                cell.value = "Direct Link"
-                cell.font = Font(color="0563C1", underline="single")
-        # Auto-size columns
-        for col in ws.columns:
+        for header in headers:
+            ws.column_dimensions[get_column_letter(headers.index(header) + 1)].width = 25  # Set column width
+        # Write data
+        for row in data:
+            ws.append(list(row.values()))
+        # Auto-adjust column widths
+        for column in ws.columns:
             max_length = 0
-            column = get_column_letter(col[0].column)
-            for cell in col:
+            column = [cell for cell in column]
+            for cell in column:
                 try:
-                    if cell.value:
-                        max_length = max(max_length, len(str(cell.value)))
-                except:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(cell.value)
+                except Exception:
                     pass
-            ws.column_dimensions[column].width = max_length + 2
-        # Add autofilter
-        ws.auto_filter.ref = ws.dimensions
-        wb.save(path)
+            adjusted_width = (max_length + 2)
+            ws.column_dimensions[get_column_letter(column[0].column)].width = adjusted_width
+        # Save workbook
+        wb.save(file_path)
+        wb.close()
 
-def main():
-    root = tk.Tk()
-    app = GlassdoorScraperApp(root)
-    root.mainloop()
+def on_closing():
+    if messagebox.askokcancel("Quit", "Do you want to quit?"):
+        root.destroy()
 
-if __name__ == "__main__":
-    main()
+root = tk.Tk()
+app = GlassdoorScraperApp(root)
+root.protocol("WM_DELETE_WINDOW", on_closing)
+root.mainloop()
